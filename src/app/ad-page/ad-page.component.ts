@@ -1,4 +1,3 @@
-
 import { Component, OnInit } from '@angular/core';
 declare var PrimoPreviewHandler: any;
 import { ActivatedRoute } from '@angular/router';
@@ -10,75 +9,61 @@ import { HttpClient } from '@angular/common/http';
   styleUrls: ['./ad-page.component.css']
 })
 export class AdPageComponent implements OnInit {
-  constructor(private http: HttpClient, private route: ActivatedRoute) {
-    
-   }
+  constructor(private http: HttpClient, private route: ActivatedRoute) { }
 
   ngOnInit(): void {
- 
     this.route.queryParams.subscribe((params: any) => {
       const defaultId = params.creativeID;
-    
-  });
-
-
-
+    });
 
     this.loadScript('https://ps.visarity.com/demos/preview/handler.js').then(() => {
       const creativeID = this.route.snapshot.queryParamMap.get('creativeID');
-      const box1 = document.getElementById('box1');
-      const box2 = document.getElementById('box2');
-      const f1b =  document.getElementById('f1b');
-      const f2b =  document.getElementById('f2b');
-      const f2a =  document.getElementById('f2a');
-      const f3a =  document.getElementById('f3a');
-      const box4 =  document.getElementById('box4');
-      const b1 =  document.getElementById('b1');
-      const b2 =  document.getElementById('b2');
-
+      const elements = {
+        box1: document.getElementById('box1'),
+        box2: document.getElementById('box2'),
+        f1b: document.getElementById('f1b'),
+        f2a: document.getElementById('f2a'),
+        f2b: document.getElementById('f2b'),
+        f3a: document.getElementById('f3a'),
+        box4: document.getElementById('box4'),
+        b1: document.getElementById('b1'),
+        b2: document.getElementById('b2')
+      };
 
       const params = {
         creativeID: creativeID,
-        cbEvents: (event: Event) => { console.log('Ad Event:', event); } 
+        cbEvents: (event: Event) => { console.log('Ad Event:', event); }
       };
 
       if (typeof PrimoPreviewHandler !== 'undefined') {
         PrimoPreviewHandler.getHandler(params)
           .then((handler: any) => {
-            const width = handler.info.width;
-            const height = handler.info.height;
-            console.log(height,width)
+            const { width, height } = handler.info;
+            console.log(height, width);
             console.log('Handler object:', handler);
 
-            if(height <= 160 && height>= 100 && width <= 970 && width>=900){
-              return handler.setupPlayer(box1, "PHONE", {});
+            const conditions = [
+              { box: elements.box1, heightRange: [100, 160], widthRange: [900, 970] },
+              { box: elements.box2, heightRange: [161, 250], widthRange: [800, 970] },
+              { box: elements.f1b, heightRange: [201, 250], widthRange: [200, 300] },
+              { box: elements.f2a, heightRange: [150, 200], widthRange: [200, 302] },
+              { box: elements.f2b, heightRange: [200, 280], widthRange: [303, 336] },
+              { box: elements.f3a, heightRange: [400, 600], widthRange: [100, 320] },
+              { box: elements.box4, heightRange: [100, 160], widthRange: [800, 970] },
+              { box: elements.b1, heightRange: [10, 90], widthRange: [235, 728] },
+              { box: elements.b2, heightRange: [10, 90], widthRange: [100, 234] }
+            ];
+
+            const selectedCondition = conditions.find(({ heightRange, widthRange }) =>
+              height >= heightRange[0] && height <= heightRange[1] &&
+              width >= widthRange[0] && width <= widthRange[1]
+            );
+
+            if (selectedCondition) {
+              return handler.setupPlayer(selectedCondition.box, "PHONE", {});
+            } else {
+              throw new Error('No matching condition for height and width');
             }
-            else if(height<=250 && height>=161 && width <= 970 && width>=800) {
-              return handler.setupPlayer(box2, "PHONE", {});
-            }
-            else if(height<=250 && height>=201 && width <= 300 && width>=200){
-              return handler.setupPlayer(f1b, "PHONE", {});
-            }
-            else if(height<=200 && height>=150 && width <= 302 && width>=200){
-              return handler.setupPlayer(f2a, "PHONE", {});
-            }
-            else if(height<=280 && height>=200 && width <= 336 && width>=303){
-              return handler.setupPlayer(f2b, "PHONE", {});
-            }
-            else if((height<=600 && height>=400) && (width <= 320 && width>=100)){
-              return handler.setupPlayer(f3a, "PHONE", {});
-            }
-            else if(height<=160 && height>=100 && width <= 970 && width>=800){
-              return handler.setupPlayer(box4, "PHONE", {});
-            }
-            else if(height<=90 && height>=10 && width <= 728&& width>=235){
-              return handler.setupPlayer(b1, "PHONE", {});
-            }
-            else if(height<=90 && height>=10 && width <= 234 && width>=100){
-              return handler.setupPlayer(b2, "PHONE", {});
-            }
-            
-           
           })
           .then((player: any) => {
             console.log("Ad player setup complete");
@@ -92,18 +77,13 @@ export class AdPageComponent implements OnInit {
     });
   }
 
-  
-
   private loadScript(url: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const scriptElement = document.createElement('script');
       scriptElement.src = url;
-      scriptElement.onload = () => resolve(); 
+      scriptElement.onload = () => resolve();
       scriptElement.onerror = reject;
       document.body.appendChild(scriptElement);
     });
   }
-
-  
 }
-
